@@ -1,0 +1,16 @@
+# python
+**/*.egg-info/
+**/layers_python3.11/
+**/.pytest_cache/
+**/build
+**/__pycache__/
+
+# for mackbook
+**/.DS_Store
+**/.idea/
+
+**/.cache/
+
+# for project
+.env
+**/vectorstores/**

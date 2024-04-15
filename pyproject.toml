@@ -1,0 +1,63 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "prompthon"
+description = "SQL chat bot"
+requires-python = ">= 3.8"
+version = "0.0.1"
+dependencies = [
+    "requests",
+    "pandas",
+    "xmltodict",
+    "langchain",
+    "streamlit",
+    "gpt4all",
+    "chromadb",
+    "python-dotenv",
+    "langchain-openai"
+]
+
+[project.optional-dependencies]
+lint = [
+    "black",
+    "flake8",
+    "mypy",
+    "isort",
+    "pre-commit"
+]
+test = [
+    "pytest",
+    "pytest-cov[all]",
+    "deepdiff",
+    "pytest-mock"
+]
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.black]
+line-length = 120
+target-version = ['py37', 'py38', 'py39', 'py310']
+
+[tool.isort]
+combine_as_imports = true
+indent = '    '
+profile = 'black'
+
+[tool.mypy]
+exclude = '^(venv/|build/|dist/|examples/transforms/setup.py)'
+ignore_missing_imports = true
+
+[tool.flake8]
+max-complexity = 20
+exclude = [".git", "__pycache__"]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q"
+testpaths = [
+    "tests",
+    "integration",
+]
