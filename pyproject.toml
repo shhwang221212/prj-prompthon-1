@@ -18,7 +18,9 @@ dependencies = [
     "gpt4all",
     "chromadb",
     "python-dotenv",
-    "langchain-openai"
+    "langchain-openai",
+    "wordcloud",
+    "matplotlib"
 ]
 
 [project.optional-dependencies]
