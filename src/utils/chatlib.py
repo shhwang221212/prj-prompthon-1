@@ -89,7 +89,7 @@ def get_chat_streaming_response(request, chat_history, bbti):
     elif question_type == "place_n":
         return question_type, get_chat_streaming_response_about_place(filtered_user_request, request, chat_history, bbti)
     elif question_type == "nothing":
-        return question_type, response
+        return question_type, filtered_user_request["response"]
 
 # place_y
 def get_chat_streaming_response_about_place(filtered_user_request, request, chat_history, bbti):

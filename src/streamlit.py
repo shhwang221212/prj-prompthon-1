@@ -101,7 +101,14 @@ if input_text:
         bbti=bbti
     )
 
-    json_response = json.loads(chat_response)
+    if type == "place_y" or type == "place_n" :
+        json_response = json.loads(chat_response)
+        response = json_response["explain"]
+    else:
+        json_response = {}
+        json_response["explain"] = chat_response
+
+
 
     with side_container1:
         message(json_response["explain"], avatar_style="icons")
@@ -109,18 +116,19 @@ if input_text:
             honzap_image = get_cong_image(json_response["congestion level"])
             st.image(honzap_image)
 
-    st.session_state.chat_history.append(
-        {"role": "user", "text": input_text}
-    )
-    st.session_state.chat_history.append(
-        {"role": "assistant", "text": chat_response}
-    )
-
     st.session_state.user.append(input_text)
     st.session_state.chatbot.append(json_response)
-    st.session_state['area_info'] = json_response
-    st.session_state['location'] = [json_response["latitude"], json_response["longitude"]]
-    st.session_state['area_info']['text'] = get_information_of_place(json_response['place_name'])['text']
+
+    if "place_name" in json_response:
+        st.session_state.chat_history.append(
+            {"role": "user", "text": input_text}
+        )
+        st.session_state.chat_history.append(
+            {"role": "assistant", "text": chat_response}
+        )
+        st.session_state['area_info'] = json_response
+        st.session_state['location'] = [json_response["latitude"], json_response["longitude"]]
+        st.session_state['area_info']['text'] = get_information_of_place(json_response['place_name'])['text']
 
 
 left, right = st.columns([2,1])
