@@ -10,7 +10,6 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import AzureChatOpenAI
 from openai.lib.azure import AzureOpenAI
 
-
 client = AzureOpenAI(
     azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT", "").strip(),
     api_key=os.getenv("AZURE_OPENAI_API_KEY"),
@@ -44,19 +43,25 @@ def get_place_example():
 
         "user request" : 혼잡한 곳을 좋아하는 사람이야 강남역 가고 싶어
         "result" {"congestion level" : "붐빔", "place_name" : "강남역", "latitude" : "37.498095", "longitude" : "127.027610", "explain": "내일 오후 7시 강남역은 혼잡으로 예측돼요. 내일 오후 강남역에서 신나게 놀아보는 건 어때요?"}
-        
+
          "user request" : 여유로운 곳을 좋아하는 사람이야 홍대입구 가고 싶어
         "result" {"congestion level" : "여유", "place_name" : "홍대입구", "latitude" : "37.554371328", "longitude" : "126.926611", "explain": "내일 오전 11시 홍대입구는 여유로울 것으로 예측돼요. 내일 오전 홍대입구에서 여유로운 시간을 보내보세요."}
 
+        "user request" : 내일 오후 3시 경리단길 사람 많을까?
+        "result" {"congestion level" : "약간 붐빔", "place_name" : "경리단길", "latitude" : "37.539165233179645", "longitude" : "126.99215879194135", "explain": "내일 오후 3시 경리단길은 혼잡할 것으로 예상돼요! 혼잡도는 '약간 붐빔' 수준이며, 약 4,000명에서 4,500명이 이 지역을 이용할 것으로 예상돼요."}
     """
+
 
 def get_no_place_example():
     return """
-        "user request": 여유로는 곳을 좋아하는 사람이야. 오늘 저녁 약속을 어디갈까? {“question_type” : “place_n”, "place": "everywhere", “weekday” : “수요일” , "date": "2024-04-17", "explain": "nothing", "bbti": "여유”}
+        "user request": 여유로운 곳을 좋아하는 사람이야. 오늘 저녁 약속을 어디서 잡으면 좋을까? {“question_type” : “place_n”, "place": "everywhere", “weekday” : “수요일” , "date": "2024-04-17", "explain": "nothing", "bbti": "여유”}
         "result": {"congestion level" : "여유", "place_name" : "서울대공원", "latitude" : "37.426449", "longitude" : "127.121420", "explain": "오늘은 18시에는 서울대공원이 한가할 예정이므로 방문하세요!"}  
-        
+
         "user request": 붐비는 곳을 좋아하는 사람이야. 내일 19시에 어디갈지 추천좀 해줘 {“question_type” : “place_n”, "place": "everywhere", “weekday” : “everyday” , "date": "everyday", "explain": "{19시에 어디갈지 추천좀 해줘}", "bbti": "붐빔”}
         "result": {"congestion level" : "붐빔", "place_name" : "강남", "latitude" : "37.497942", "longitude" : "127.027621", "explain": "내일 19시에는 강남, 압구정이 붐빌 예정이므로 방문을 추천드립니다.}
+    
+         "user request": 여유로운 곳을 좋아해. 내일 데이트 어디서 하면 좋을까?
+        "result": {"congestion level" : "여유", "place_name" : "남대문시장", "latitude" : "37.559868", "longitude" : "126.977079", "explain": "내일 데이트 장소로 남대문시장을 추천해드려요! 오후 1시부터 6시까지는 여유로울 것으로 예상돼요. 최소 800명에서 최대 2000명까지 이 지역을 이용할 것으로 예상돼요."}    
     """
 
 
@@ -78,7 +83,7 @@ def search_data_from_rag(request, question_type):
                                  api_version=api_version)
 
     embedding = client.embeddings.create(input=request, model=embedding_model_name).data[0].embedding
-    vector_query = VectorizedQuery(vector=embedding, k_nearest_neighbors=20, fields=filed_name, exhaustive=True)
+    vector_query = VectorizedQuery(vector=embedding, k_nearest_neighbors=15, fields=filed_name, exhaustive=True)
 
     results = search_client.search(
         search_text=None,
@@ -88,6 +93,7 @@ def search_data_from_rag(request, question_type):
 
     return results
 
+
 def get_chat_streaming_response(request, chat_history, bbti):
     response = filter_user_request(request)
     filtered_user_request = json.loads(response)
@@ -95,11 +101,14 @@ def get_chat_streaming_response(request, chat_history, bbti):
     print(filtered_user_request)
 
     if question_type == "place_y":
-        return question_type, get_chat_streaming_response_about_place(filtered_user_request, request, chat_history, bbti, question_type)
+        return question_type, get_chat_streaming_response_about_place(filtered_user_request, request, chat_history,
+                                                                      bbti, question_type)
     elif question_type == "place_n":
-        return question_type, get_chat_streaming_response_about_no_place(filtered_user_request, request, chat_history, bbti, question_type)
+        return question_type, get_chat_streaming_response_about_no_place(filtered_user_request, request, chat_history,
+                                                                         bbti, question_type)
     elif question_type == "nothing":
         return question_type, response
+
 
 # place_y
 def get_chat_streaming_response_about_place(filtered_user_request, request, chat_history, bbti, question_type):
@@ -134,6 +143,7 @@ def get_chat_streaming_response_about_place(filtered_user_request, request, chat
     print(result)
     return result
 
+
 #
 def get_chat_streaming_response_about_no_place(filtered_user_request, request, chat_history, bbti, question_type):
     prompt = get_no_place_prompt()
@@ -146,6 +156,7 @@ def get_chat_streaming_response_about_no_place(filtered_user_request, request, c
                 "chat_history": itemgetter("chat_history"),
                 "json_format": itemgetter("json_format"),
                 "bbti": itemgetter("bbti"),
+                "reform_data" : itemgetter("reform_data")
             }
             | prompt
             | capture_and_return
@@ -153,7 +164,7 @@ def get_chat_streaming_response_about_no_place(filtered_user_request, request, c
             | StrOutputParser()
     )
 
-    index = f"{filtered_user_request['cong_lvl']} {filtered_user_request['weekday']} {filtered_user_request['time']}"
+    index = f"{bbti} {filtered_user_request['weekday']} {filtered_user_request['time']}"
 
     input_prompt = {
         "request": request,
@@ -161,7 +172,8 @@ def get_chat_streaming_response_about_no_place(filtered_user_request, request, c
         "examples": get_no_place_example(),
         "chat_history": chat_history,
         "bbti": bbti,
-        "json_format": get_json_format()
+        "json_format": get_json_format(),
+        "reform_data" : filtered_user_request
     }
     result = chain.invoke(input_prompt)
     print(result)
@@ -195,7 +207,7 @@ def get_information_of_place(place_name):
         temperature=0,
         max_tokens=1000
     )
-    return {"text" : response1.choices[0].message.content, "search" : response2.choices[0].message.content}
+    return {"text": response1.choices[0].message.content, "search": response2.choices[0].message.content}
 
 
 def capture_and_return(data):
@@ -215,46 +227,48 @@ def json_to_string(results):
         """
     return grounding
 
+
 def get_first_prompt():
     return """
     너는 사용자의 질문을 듣고 필요한 정보를 추출해내는 봇이야.
     너는 반드시 다음과 같은 json 형식으로 대답해야해
     {"question_type" : "", "place": "", "weekday" : "", "date": "", "time": "", "response" : "" }
-    
+
     질문 유형은 다음과 같이 3개로 분류해줘
     ["place_y", "place_n", "nothing"]
     질문에 위치가 지정되어있으면 place_y로 대답해줘
     질문에 위치가 없으면 place_n로 대답해줘
     질문이 맥락이 없다면 nothing으로 대답해줘
-    
+
     요일은 '월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일'로 한국시간으로 계산해서 대답해줘
-    
+
     위치를 말해줬으면 place를 위치로 대답해주고, 말해주지 않았다면 everywhere로 대답해줘
-    
+
     날짜는 오늘이나 내일만 한국 표준시간 기준으로 yyyy-mm-dd 형식으로 대답해주는데 내일이라고 하면 다음날로 계산해서줘. 만약 받은 질문에서 날짜가 오늘인지 내일인지 정확하게 모른다면 다시 물어봐줘
-    
+
     사용자가 시간에 대해 언급했다면 time 필드에 넣어주고, 언급하지 않았다면 빈칸으로 놔둬.
-    
+
     만약 question_type이 place_y이지만 질문에서 오늘인지 내일인지 정확하게 판단할 수 없다면 다시 물어봐줘
-    
+
     만약 question_type이 nothing인 경우 response에 질문에 대한 답을 해줘.
-    
+
     examples:
         내일 광화문에 사람이 많을까?
         {"question_type": "place_y", "place": "광화문", "weekday": "목요일", "date": "2024-04-18", "time" :"", "response" : ""}
-        
+
         지금 갈만한 한산한 곳이 있을까?
         {"question_type": "place_n", "place": "everywhere", "weekday": "수요일", "date": "2024-04-17", "time" :"", "response" : ""}
-        
+
         내일 어디가는게 좋을까?
         {"question_type": "place_n", "place": "everywhere", "weekday": "목요일", "date": "2024-04-18", "time" :"", "response" : ""}
-         
+
         내일 오후 3시에 광화문 혼잡도는 어떨까?
         {"question_type": "place_n", "place": "everywhere", "weekday": "목요일", "date": "2024-04-18", "time" :"15시", "response" : ""}
-     
+
         뭐하냐?
         {"question_type": "nothing", "place": "", "weekday": "", "date": "", "time" :"", "response" :"글쎄요 당신 생각 중?"}
     """
+
 
 def filter_user_request(user_input):
     prompt = get_first_prompt()
@@ -279,7 +293,7 @@ def get_place_prompt():
         When the user doesn't tell you the time information, recommend the time according to the user's preference
             질문자의 성향: {bbti}
         If users like to be crowded, let them know the estimated time for which the population density is high, and if they like to be relaxed, let them know the estimated time for which the population density is low
-          
+
         - Please have a good way of speaking in the Explain section
 
 
@@ -308,23 +322,25 @@ def get_no_place_prompt():
     return ChatPromptTemplate.from_template(
         """
         너는 사용자가 어디에 방문해야 하는지 추천해주는 챗봇이야.
+        
+        - Generate output as the following json format. 
+            {json_format}
 
-        원래 질문은 {chat_history}야.
-        
         - 제공되는 데이터는 다음과 같아.
-            {“question_type” : “place_n”, "place": "everywhere", “weekday” : “” , "date": "", "explain": "{원래 질문}", "bbti": ""}
-        
+            {reform_data}
+            
+            
         - bbti는 다음과 같이 4개로 나뉘어 있어.
             ['여유', '보통', '약간 붐빔', '붐빔']
-        
+
         - 사용자가 날짜나 요일을 지정하지 않았다면 제공되는 데이터의 date, weekday는 everyday야.
-        
+
         - 사용자의 장소의 혼잡도 성향은 {bbti}를 좋아하기 때문에 이를 고려해서 추천해줘.
-        
+
         - 위의 맥락과 제공된 데이터를 바탕으로 어느 장소에 어느 시간에 가야 하는지 추천해줘.
-        
+
         - date가 현재 날짜와 같으면 오늘로 표현하고, 1일 후면 내일로 표현해줘.
-        
+
         ## grounding:
             {grounding}
 
