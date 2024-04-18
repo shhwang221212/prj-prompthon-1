@@ -49,7 +49,7 @@ st.sidebar.image("https://github.com/shhwang221212/prj-prompthon-1/assets/126046
 side_container0 = st.sidebar.container(border=True)
 col1, col2, col3, col4 = side_container0.columns(4)
 
-bbti = "혼잡도가 여유로운 걸 좋아하는 사람"
+bbti = "여유"
 
 with col1:
     st.image("https://github.com/shhwang221212/prj-prompthon-1/assets/126046181/7e820597-e61e-4b60-84ef-aa85dac50a1a", width=100)
@@ -65,13 +65,13 @@ with col4:
     lev4 = st.checkbox("      ")
 
 if lev1:
-    bbti = "인구밀집도가 낮고 혼잡도가 여유인 상태를 좋아하는 사람"
+    bbti = "여유"
 if lev2:
-    bbti = "인구밀집도가 낮고 혼잡도가 보통인 상태를 좋아하는 사람"
+    bbti = "보통"
 if lev3:
-    bbti = "인구밀도가 높고 혼잡도 약간붐빔 상태를 걸 좋아하는 사람"
+    bbti = "약간붐빔"
 if lev4:
-    bbti = "인구밀도가 높고 혼잡도가 혼잡인 상태를 좋아하는 사람"
+    bbti = "혼잡"
 
 st.sidebar.header("어디든 데려가줄게 👀")  # page title
 
@@ -140,7 +140,7 @@ with left:
         st.session_state['location'], popup=st.session_state['area_info']["place_name"] + " " + st.session_state['area_info']["congestion level"], tooltip="<img src='" +  get_cong_small_image(st.session_state['area_info']["congestion level"])+ "' width=100>",
         icon=folium.Icon(color=color)
     ).add_to(m)
-    st_data = st_folium(m, width=900, height=800, returned_objects=["last_object_clicked"])
+    st_data = st_folium(m, width=800, height=800, returned_objects=["last_object_clicked"])
 
 
 with (right):
@@ -155,7 +155,8 @@ with (right):
     st.markdown("#### 👀 :orange[Top30] 연관 키워드")
 
     # Create some sample text
-    text =st.session_state['area_info']["text"]
+    if "text" in st.session_state['area_info']:
+        text =st.session_state['area_info']["text"]
 
     # Create and generate a word cloud image:
     wordcloud = WordCloud(background_color="white", font_path=font_path).generate(text)
